@@ -76,6 +76,15 @@ module Robots
       @_bucket = nil
     end
 
+    def sitemap(&block)
+      collect_bucket(&block)
+      scope = @_env.nil?? :global : @_env
+      if @_bucket.any?
+        @_sitemap[scope].push(@_bucket).flatten!
+      end
+      @_bucket = nil
+    end
+
     # Function responsible to format the output of Robots::DSL
     # it is used on Robots::TemplateHandler with a Rails.env variable
     # to contextualize what is the environment to be rendered
@@ -101,11 +110,15 @@ module Robots
     def print_routes(env)
       routes = ""
       @_allowed_routes[env].each do |route|
-        routes += "Allow : #{route}\n"
+        routes += "Allow: #{route}\n"
       end
 
       @_disallowed_routes[env].each do |route|
-        routes += "Disallow : #{route}\n"
+        routes += "Disallow: #{route}\n"
+      end
+
+      @_sitemap[env].each do |route|
+        routes += "\nSitemap: #{route}\n"
       end
       routes
     end
@@ -119,8 +132,10 @@ module Robots
     def create_schema_for(environment)
       @_disallowed_routes ||= {}
       @_allowed_routes    ||= {}
+      @_sitemap    ||= {}
       @_disallowed_routes.merge!({ environment.to_sym => [] })
       @_allowed_routes .merge!({ environment.to_sym => [] })
+      @_sitemap.merge!({ environment.to_sym => []})
     end
   end
 end
